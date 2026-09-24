@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حسابات البلايستيشن</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0d1b3e;--blue:#0070d1;--bg:#eef2f8;--card:#fff;--line:#dbe3ef;--green:#0f9d58;--red:#d93838;--mute:#5d6b86}
+*{box-sizing:border-box}
+body{margin:0;font-family:Cairo,Tahoma,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:40px}
+header{background:var(--ink);color:#fff;padding:16px 16px 0}
+header h1{margin:0 0 12px;font-size:20px;font-weight:800}
+nav{display:flex;gap:4px}
+nav button{flex:1;background:transparent;color:#a9b8d9;border:0;padding:10px 4px;font:600 14px Cairo,sans-serif;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:#fff;border-color:var(--blue)}
+main{max-width:640px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input,select{width:100%;font:600 16px Cairo,sans-serif;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.big{font-size:22px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}
+.row .v{font-weight:800;white-space:nowrap}
+.neg{color:var(--red)}.pos{color:var(--green)}
+.add{display:grid;grid-template-columns:2fr 1fr auto;gap:8px;margin-top:10px}
+.add.three{grid-template-columns:2fr 1fr 1fr auto}
+.btn{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:0 16px;font:700 15px Cairo,sans-serif;cursor:pointer;min-height:42px}
+.btn.ghost{background:#e6ecf7;color:var(--ink)}
+.x{background:transparent;border:0;color:var(--red);font-size:20px;cursor:pointer;padding:0 6px}
+.net{background:var(--ink);color:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px}
+.net small{color:#a9b8d9;display:block}
+.net b{font-size:34px;font-weight:800}
+.net b.neg{color:#ff8d8d}.net b.pos{color:#5fe0a0}
+.set{display:grid;grid-template-columns:2fr 1.2fr 1.2fr auto;gap:6px;margin-bottom:8px}
+.set.emp{grid-template-columns:2fr 1.2fr auto}
+.set input,.set select{font-size:14px;padding:8px 6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 4px;text-align:center;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:600}
+.empty{color:var(--mute);text-align:center;padding:10px;font-size:14px}
+.hint{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+.tabv{display:none}.tabv.on{display:block}
+@media(max-width:420px){.add.three{grid-template-columns:1fr 1fr}.add.three select,.add.three .btn{grid-column:1/-1}}
+.x.armed{background:var(--red);color:#fff;border-radius:6px;font-size:13px;padding:4px 8px;white-space:nowrap}
+.add.three select{min-width:0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎮 حسابات محل البلايستيشن</h1>
+  <nav>
+    <button data-t="day" class="on">اليوم</button>
+    <button data-t="month">الشهر</button>
+    <button data-t="set">المصاريف الثابتة</button>
+  </nav>
+</header>
+<div id="toast"></div>
+<main>
+
+<section id="day" class="tabv on">
+  <div class="card">
+    <label for="date">التاريخ</label>
+    <input type="date" id="date">
+  </div>
+  <div class="card">
+    <label for="rev">إيراد اليوم (جنيه)</label>
+    <input type="number" id="rev" inputmode="decimal" min="0" placeholder="0" class="big">
+  </div>
+  <div class="card">
+    <h2>مصاريف ثابتة بتتخصم تلقائي</h2>
+    <div id="fixed"></div>
+  </div>
+  <div class="card">
+    <h2>مصاريف اليوم (بضاعة، صيانة، ...)</h2>
+    <div id="extras"></div>
+    <div class="add">
+      <input id="xn" placeholder="اسم المصروف" list="sug">
+      <input id="xa" type="number" inputmode="decimal" min="0" placeholder="المبلغ">
+      <button class="btn" id="xadd">إضافة</button>
+    </div>
+    <datalist id="sug"><option value="بضاعة"><option value="مشروبات"><option value="صيانة"><option value="إنترنت"><option value="نظافة"><option value="مصاريف نثرية"></datalist>
+  </div>
+  <div class="card">
+    <h2>مسحوبات الموظفين</h2>
+    <div id="draws"></div>
+    <div class="add">
+      <select id="dn" aria-label="الموظف"></select>
+      <input id="da" type="number" inputmode="decimal" min="0" placeholder="المبلغ">
+      <button class="btn" id="dadd">إضافة</button>
+    </div>
+    <p class="hint">المسحوب بيطلع من فلوس اليوم وبيتخصم من راتب الموظف آخر الشهر، ومش بيتحسب مصروف تاني على الربح.</p>
+  </div>
+  <div class="net"><small>صافي ربح اليوم</small><b id="net">0</b>
+    <small style="margin-top:8px">الكاش المتبقي بعد المسحوبات والمصاريف: <span id="cash">0</span></small></div>
+</section>
+
+<section id="month" class="tabv">
+  <div class="card">
+    <label for="mon">الشهر</label>
+    <input type="month" id="mon">
+  </div>
+  <div id="msum"></div>
+  <div class="card"><h2>تفاصيل الأيام</h2><div id="mtable" style="overflow-x:auto"></div></div>
+</section>
+
+<section id="set" class="tabv">
+  <div class="card">
+    <h2>الكهرباء، الإيجار، وأي مصروف ثابت</h2>
+    <div id="items"></div>
+    <div class="add three">
+      <input id="in" placeholder="الاسم (مثال: راتب أحمد)">
+      <input id="ia" type="number" inputmode="decimal" min="0" placeholder="المبلغ">
+      <select id="ip"><option value="month">شهري</option><option value="week">أسبوعي</option><option value="day">يومي</option></select>
+      <button class="btn" id="iadd">إضافة</button>
+    </div>
+    <p class="hint">المصروف الشهري بيتقسم على عدد أيام الشهر وبيتخصم كل يوم. غيّر المبلغ في أي وقت وهيتحسب على كل الأيام.</p>
+  </div>
+  <div class="card">
+    <h2>الموظفين ورواتبهم الشهرية</h2>
+    <div id="emps"></div>
+    <div class="add three">
+      <input id="en" placeholder="اسم الموظف">
+      <input id="ea" type="number" inputmode="decimal" min="0" placeholder="الراتب">
+      <select id="ep"><option value="month">شهري</option><option value="week">أسبوعي</option><option value="day">يومي</option></select>
+      <button class="btn" id="eadd">إضافة</button>
+    </div>
+    <p class="hint">ضيف كل موظف لوحده باسمه وراتبه، واختار شهري أو أسبوعي أو يومي. النظام بيخصم نصيب كل يوم من الإيراد، والمسحوب بيتسجل من تبويب اليوم.</p>
+  </div>
+  <div class="card">
+    <h2>نسخة احتياطية</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn ghost" id="exp">حفظ نسخة</button>
+      <button class="btn ghost" id="imp">استرجاع نسخة</button>
+      <input type="file" id="file" accept=".json" hidden>
+    </div>
+    <p class="hint">البيانات محفوظة في المتصفح على نفس الجهاز. خد نسخة احتياطية من وقت للتاني.</p>
+  </div>
+</section>
+
+</main>
+<script>
+const KEY='ps_accounts_v1';
+let S={items:[
+  {id:1,name:'الكهرباء',amount:0,period:'month'},
+  {id:2,name:'الإيجار',amount:0,period:'month'}],days:{}};
+try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const toast=t=>{const e=document.getElementById('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2500)};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const f=n=>(Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});
+const cls=n=>n<0?'neg':'pos';
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const dim=d=>{const[y,m]=d.split('-').map(Number);return new Date(y,m,0).getDate()};
+const day=d=>{const D=S.days[d]||(S.days[d]={rev:0,extras:[],draws:[]});D.draws=D.draws||[];return D};
+const fixedFor=d=>S.items.map(i=>({name:i.name,val:i.period==='day'?+i.amount:i.period==='week'?+i.amount/7:+i.amount/dim(d)}));
+const calc=d=>{
+  const D=S.days[d]||{rev:0,extras:[],draws:[]};
+  const fx=fixedFor(d).reduce((a,b)=>a+b.val,0);
+  const ex=D.extras.reduce((a,b)=>a+ +b.amount,0);
+  const dr=(D.draws||[]).reduce((a,b)=>a+ +b.amount,0);
+  return{rev:+D.rev||0,fx,ex,dr,net:(+D.rev||0)-fx-ex,cash:(+D.rev||0)-ex-dr};
+};
+
+function renderDay(){
+  const d=$('date').value,D=day(d);
+  const fx=fixedFor(d);
+  $('fixed').innerHTML=fx.length?fx.map(x=>`<div class="row"><span>${esc(x.name)}</span><span class="v neg">- ${f(x.val)}</span></div>`).join(''):'<div class="empty">مفيش مصاريف ثابتة. ضيفها من تبويب المصاريف الثابتة.</div>';
+  $('extras').innerHTML=D.extras.length?D.extras.map((x,i)=>`<div class="row"><span>${esc(x.name)}</span><span><span class="v neg">- ${f(x.amount)}</span><button class="x" data-i="${i}" aria-label="حذف">×</button></span></div>`).join(''):'<div class="empty">لسه مفيش مصاريف اليوم.</div>';
+  $('draws').innerHTML=D.draws.length?D.draws.map((x,i)=>{const e=S.items.find(t=>t.id==x.emp);return`<div class="row"><span>${esc(e?e.name:x.name)}</span><span><span class="v neg">- ${f(x.amount)}</span><button class="x" data-i="${i}" aria-label="حذف">×</button></span></div>`}).join(''):'<div class="empty">مفيش مسحوبات النهارده.</div>';
+  const c=calc(d);
+  $('net').textContent=f(c.net)+' جنيه';
+  $('net').className=cls(c.net);
+  $('cash').textContent=f(c.cash)+' جنيه';
+}
+function rowHtml(i){return`<div class="set" data-id="${i.id}"><input data-k="name" value="${esc(i.name)}" aria-label="الاسم"><input data-k="amount" type="number" inputmode="decimal" min="0" value="${i.amount}" aria-label="المبلغ"><select data-k="period">${[['month','شهري'],['week','أسبوعي'],['day','يومي']].map(([v,t])=>`<option value="${v}"${i.period===v?' selected':''}>${t}</option>`).join('')}</select><button class="x" data-del="${i.id}" aria-label="حذف">×</button></div>`}
+function renderItems(){
+  const fx=S.items.filter(i=>!i.emp),em=S.items.filter(i=>i.emp);
+  $('items').innerHTML=fx.length?fx.map(rowHtml).join(''):'<div class="empty">ضيف أول مصروف ثابت من تحت.</div>';
+  $('emps').innerHTML=em.length?em.map(rowHtml).join(''):'<div class="empty">ضيف الموظفين وراتب كل واحد.</div>';
+  const cur=$('dn').value;
+  $('dn').innerHTML=em.length?em.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join(''):'<option value="">ضيف موظف الأول</option>';
+  if(cur)$('dn').value=cur;
+}
+function renderMonth(){
+  const m=$('mon').value;
+  const ds=Object.keys(S.days).filter(d=>d.startsWith(m)&&(S.days[d].rev||S.days[d].extras.length||(S.days[d].draws||[]).length)).sort();
+  let R=0,F=0,E=0,N=0;
+  const rows=ds.map(d=>{const c=calc(d);R+=c.rev;F+=c.fx;E+=c.ex;N+=c.net;
+    return`<tr><td>${d.slice(8)}</td><td>${f(c.rev)}</td><td>${f(c.fx+c.ex)}</td><td class="${cls(c.net)}"><b>${f(c.net)}</b></td></tr>`}).join('');
+  const emps=S.items.filter(i=>i.emp);
+  const per={day:'يومي',week:'أسبوعي',month:'شهري'};
+  const empCard=emps.length?`<div class="card"><h2>حساب الموظفين</h2><table><tr><th>الموظف</th><th>المستحق</th><th>المسحوب</th><th>المتبقي</th></tr>${emps.map(e=>{const due=e.period==='day'?e.amount*ds.length:e.period==='week'?e.amount/7*ds.length:+e.amount;const dr=ds.reduce((a,d)=>a+(S.days[d].draws||[]).filter(x=>x.emp==e.id).reduce((t,x)=>t+ +x.amount,0),0);return`<tr><td>${esc(e.name)}<br><small style="color:var(--mute)">${per[e.period]||'شهري'} ${f(e.amount)}</small></td><td>${f(due)}</td><td class="neg">${f(dr)}</td><td class="${cls(due-dr)}"><b>${f(due-dr)}</b></td></tr>`}).join('')}</table><p class="hint">اليومي والأسبوعي بيتحسبوا على عدد الأيام المسجلة في الشهر.</p></div>`:'';
+  $('msum').innerHTML=`<div class="net"><small>صافي ربح الشهر (${ds.length} يوم مسجل)</small><b class="${cls(N)}">${f(N)} جنيه</b></div>
+  <div class="card"><div class="row"><span>إجمالي الإيرادات</span><span class="v">${f(R)}</span></div>
+  <div class="row"><span>المصاريف الثابتة (كهرباء، إيجار، رواتب...)</span><span class="v neg">- ${f(F)}</span></div>
+  <div class="row"><span>مصاريف أخرى (بضاعة وغيرها)</span><span class="v neg">- ${f(E)}</span></div></div>${empCard}`;
+  $('mtable').innerHTML=ds.length?`<table><tr><th>اليوم</th><th>الإيراد</th><th>المصاريف</th><th>الصافي</th></tr>${rows}</table>`:'<div class="empty">مفيش أيام مسجلة في الشهر ده.</div>';
+}
+const syncDay=()=>{const d=$('date').value;$('rev').value=S.days[d]&&S.days[d].rev?S.days[d].rev:'';renderDay()};
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tabv').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));
+  if(b.dataset.t==='month')renderMonth();
+});
+$('date').onchange=syncDay;
+$('rev').oninput=e=>{day($('date').value).rev=+e.target.value||0;save();renderDay()};
+$('xadd').onclick=()=>{
+  const n=$('xn').value.trim(),a=+$('xa').value;
+  if(!n||!(a>0)){$('xn').focus();return}
+  day($('date').value).extras.push({name:n,amount:a});save();
+  $('xn').value='';$('xa').value='';renderDay();$('xn').focus();
+};
+$('extras').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;day($('date').value).extras.splice(+i,1);save();renderDay()};
+$('iadd').onclick=()=>{
+  const n=$('in').value.trim(),a=+$('ia').value;
+  if(!n||!(a>=0)||$('ia').value===''){$('in').focus();return}
+  S.items.push({id:Date.now(),name:n,amount:a,period:$('ip').value});save();
+  $('in').value='';$('ia').value='';renderItems();renderDay();
+};
+const onEdit=e=>{
+  const row=e.target.closest('.set');if(!row)return;
+  const it=S.items.find(x=>x.id==row.dataset.id),k=e.target.dataset.k;
+  it[k]=k==='amount'?(+e.target.value||0):e.target.value;save();renderItems();renderDay();
+};
+const onDel=e=>{
+  const b=e.target.closest('[data-del]');if(!b)return;
+  if(b.dataset.arm){S.items=S.items.filter(x=>x.id!=b.dataset.del);save();renderItems();renderDay();return}
+  b.dataset.arm='1';b.textContent='احذف؟';b.classList.add('armed');
+  setTimeout(()=>{if(b.isConnected){b.dataset.arm='';b.textContent='×';b.classList.remove('armed')}},3000);
+};
+['items','emps'].forEach(k=>{$(k).onchange=onEdit;$(k).onclick=onDel});
+$('eadd').onclick=()=>{
+  const n=$('en').value.trim();
+  if(!n||$('ea').value===''){$('en').focus();return}
+  S.items.push({id:Date.now(),name:n,amount:+$('ea').value,period:$('ep').value,emp:true});save();
+  $('en').value='';$('ea').value='';renderItems();renderDay();
+};
+$('dadd').onclick=()=>{
+  const id=$('dn').value,a=+$('da').value;
+  if(!id||!(a>0)){$('da').focus();return}
+  const e=S.items.find(t=>t.id==id);
+  day($('date').value).draws.push({emp:e.id,name:e.name,amount:a});save();
+  $('da').value='';renderDay();
+};
+$('draws').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;day($('date').value).draws.splice(+i,1);save();renderDay()};
+$('mon').onchange=renderMonth;
+$('exp').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  a.download='ps-accounts-'+today()+'.json';a.click();
+};
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=e=>{
+  const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result);if(!j.items||!j.days)throw 0;S=j;save();renderItems();syncDay();toast('تم استرجاع النسخة')}catch(x){toast('الملف ده مش نسخة صحيحة')}};
+  if(e.target.files[0])r.readAsText(e.target.files[0]);
+};
+
+$('date').value=today();$('mon').value=today().slice(0,7);
+renderItems();syncDay();
+</script>
+</body>
+</html>
